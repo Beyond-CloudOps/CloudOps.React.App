@@ -53,4 +53,5 @@ stages:
               appType: webAppLinux
               appName: 'react-app-cloudops'
               runtimeStack: 'NODE|20-lts'
+              package: '$(Pipeline.Workspace)/ReactApp/$(Build.BuildId).zip'
               startUpCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
