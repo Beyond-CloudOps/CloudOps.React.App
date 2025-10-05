@@ -1,0 +1,56 @@
+pool:
+  name: SH-AP-CloudOps
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build_Job
+    steps:
+    - task: NodeTool@0
+      displayName: 'Use Node 20.x'
+      inputs:
+        versionSpec: 20.x
+    - task: Npm@1
+      displayName: 'npm install'
+      inputs:
+        workingDir: .
+        verbose: false
+    - task: Npm@1
+      displayName: 'npm custom'
+      inputs:
+        command: custom
+        workingDir: .
+        verbose: false
+        customCommand: 'run build'
+    - task: ArchiveFiles@2
+      displayName: 'Archive Build'
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)/build'
+        includeRootFolder: false
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: ReactApp'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        ArtifactName: ReactApp
+
+- stage: Deploy_Dev
+  displayName: "Deploy to Dev"
+  dependsOn: Build
+  jobs:
+  - deployment: Deploy_Dev
+    displayName: "Deploy to Dev App Service"
+    environment: "Dev"
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Script to execute"
+            displayName: "Step Display Name"
+          - task: AzureWebApp@1
+            displayName: 'Azure Web App Deploy: react-app-cloudops'
+            inputs:
+              azureSubscription: 'SC-BeyondCloudOps'
+              appType: webAppLinux
+              appName: 'react-app-cloudops'
+              runtimeStack: 'NODE|20-lts'
+              startUpCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
